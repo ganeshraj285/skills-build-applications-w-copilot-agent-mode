@@ -11,14 +11,14 @@ const port = 8000;
 
 app.use(express.json());
 
-const codespaceName = process.env.CODESPACE_NAME;
+const getApiBaseUrl = (_req: Request) => {
+  const codespaceName = process.env.CODESPACE_NAME;
 
-const getApiBaseUrl = (req: Request) => {
   if (codespaceName) {
     return `https://${codespaceName}-8000.app.github.dev`;
   }
 
-  return `${req.protocol}://${req.get('host') || 'localhost:8000'}`;
+  return 'http://localhost:8000';
 };
 
 const buildPayload = (req: Request, data: unknown) => ({

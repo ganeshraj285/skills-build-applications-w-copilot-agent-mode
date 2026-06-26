@@ -13,12 +13,12 @@ const workout_1 = require("./models/workout");
 const app = (0, express_1.default)();
 const port = 8000;
 app.use(express_1.default.json());
-const codespaceName = process.env.CODESPACE_NAME;
-const getApiBaseUrl = (req) => {
+const getApiBaseUrl = (_req) => {
+    const codespaceName = process.env.CODESPACE_NAME;
     if (codespaceName) {
         return `https://${codespaceName}-8000.app.github.dev`;
     }
-    return `${req.protocol}://${req.get('host') || 'localhost:8000'}`;
+    return 'http://localhost:8000';
 };
 const buildPayload = (req, data) => ({
     apiUrl: getApiBaseUrl(req),
