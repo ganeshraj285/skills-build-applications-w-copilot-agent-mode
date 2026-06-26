@@ -1,50 +1,91 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react'
+// Codespaces endpoint:
+// https://YOUR_CODESPACE_NAME-8000.app.github.dev/api/leaderboard
+
 const API_BASE = import.meta.env.VITE_CODESPACE_NAME
   ? `https://${import.meta.env.VITE_CODESPACE_NAME}-8000.app.github.dev/api`
-  : "http://localhost:8000/api";
-  
+  : 'http://localhost:8000/api'
 
-const Leaderboard = () => {
-  const [entries, setEntries] = useState([]);
-  const [loading, setLoading] = useState(true);
+const normalizeItems = (payload) => {
+  if (Array.isArray(payload)) {
+    return payload
+  }
+
+  if (payload && Array.isArray(payload.data)) {
+    return payload.data
+  }
+
+  if (payload && Array.isArray(payload.items)) {
+    return payload.items
+  }
+
+  return []
+}
+
+function Leaderboard() {
+  const [entries, setEntries] = useState([])
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const loadLeaderboard = async () => {
-      try {
-        const response = await fetch(`${API_BASE}/leaderboard`);
-        const payload = await response.json();
-        const data = Array.isArray(payload) ? payload : payload.data ?? [];
-        setEntries(data);
-      } catch (error) {
-        console.error('Failed to load leaderboard', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    const controller = new AbortController()
 
-    loadLeaderboard();
-  }, []);
+    fetch(`${API_BASE}/leaderboard`, { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Unable to load leaderboard')
+        }
+
+        return response.json()
+      })
+      .then((payload) => {
+        setEntries(normalizeItems(payload))
+        setError('')
+      })
+      .catch((err) => {
+        if (err.name !== 'AbortError') {
+          setError(err.message)
+        }
+      })
+      .finally(() => setLoading(false))
+
+    return () => controller.abort()
+  }, [])
 
   return (
     <section>
-      <h2 className="mb-4">Leaderboard</h2>
-      {loading ? (
-        <p>Loading leaderboard...</p>
-      ) : (
-        <div className="list-group">
-          {entries.map((entry) => (
-            <div className="list-group-item d-flex justify-content-between align-items-center" key={entry._id || entry.rank}>
-              <div>
-                <h5 className="mb-1">#{entry.rank} {entry.user?.name || entry.name}</h5>
-                <small className="text-muted">Streak: {entry.streak ?? 0}</small>
-              </div>
-              <span className="badge bg-primary rounded-pill">{entry.score ?? entry.points ?? 0}</span>
-            </div>
-          ))}
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h2 className="h4 mb-0">Leaderboard</h2>
+        <span className="text-muted small">{entries.length} entries</span>
+      </div>
+
+      {loading && <p className="text-muted">Loading leaderboard...</p>}
+      {error && <div className="alert alert-danger">{error}</div>}
+
+      {!loading && !error && (
+        <div className="table-responsive">
+          <table className="table table-striped align-middle">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>User</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map((entry, index) => (
+                <tr key={entry._id || entry.id || `${entry.user?.name}-${index}`}>
+                  <td>{index + 1}</td>
+                  <td>{entry.user?.name || 'Unknown'}</td>
+                  <td>{entry.score || 0}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </section>
-  );
-};
+  )
+}
 
-export default Leaderboard;
+export default Leaderboard
