@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const mongoose_1 = __importDefault(require("mongoose"));
+const database_1 = require("./config/database");
 const user_1 = require("./models/user");
 const team_1 = require("./models/team");
 const activity_1 = require("./models/activity");
@@ -60,7 +60,7 @@ app.post(['/api/workouts', '/api/workouts/'], (req, res) => {
     res.status(201).json(buildPayload(req, { created: true, workout: req.body }));
 });
 const startServer = async () => {
-    await mongoose_1.default.connect('mongodb://127.0.0.1:27017/octofit_db');
+    await (0, database_1.connectDatabase)();
     app.listen(port, () => {
         console.log(`Backend listening on port ${port}`);
     });

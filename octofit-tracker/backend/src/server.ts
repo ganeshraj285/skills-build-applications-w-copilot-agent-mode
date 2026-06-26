@@ -1,5 +1,5 @@
 import express, { type Request, type Response } from 'express';
-import mongoose from 'mongoose';
+import { connectDatabase } from './config/database';
 import { User } from './models/user';
 import { Team } from './models/team';
 import { Activity } from './models/activity';
@@ -72,7 +72,7 @@ app.post(['/api/workouts', '/api/workouts/'], (req: Request, res: Response) => {
 });
 
 const startServer = async () => {
-  await mongoose.connect('mongodb://127.0.0.1:27017/octofit_db');
+  await connectDatabase();
   app.listen(port, () => {
     console.log(`Backend listening on port ${port}`);
   });
